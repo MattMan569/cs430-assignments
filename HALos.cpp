@@ -352,6 +352,7 @@ void HandleHAL9000Interrupt()
 void HandleSystemCall()
 {
     fileDescriptor file;
+    processDescriptor process;
 
     cpuProcess.runningTime = cpuProcess.runningTime + atoi(HAL9000Message.parameter7.c_str());
     cpuProcess.systemCallInterruptCounter++;
@@ -449,6 +450,53 @@ void HandleSystemCall()
         }
         SetSystemCallParameters(cpuProcess, "", "", "", "", "", "FILE_CLOSE_OK");
         readyQueue.Enqueue(cpuProcess);
+    }
+    // Assignment 4 - clone & run
+    else if (HAL9000Message.parameter1 == "CLONE")
+    {
+        process = CloneProcessImage(cpuProcess);
+        if (process.pid != itos(-1))
+        {
+            if (GetRandomNoFromZeroTo(2) == 0)
+            {
+                SetSystemCallParameters(cpuProcess, "", "", "", "", process.pid, "CLONE_OK");
+                readyQueue.Enqueue(cpuProcess);
+                SetSystemCallParameters(process, "", "", "", "", itos(0), "CLONE_OK");
+                readyQueue.Enqueue(process);
+            }
+            else
+            {
+                SetSystemCallParameters(process, "", "", "", "", itos(0), "CLONE_OK");
+                readyQueue.Enqueue(process);
+                SetSystemCallParameters(cpuProcess, "", "", "", "", process.pid, "CLONE_OK");
+                readyQueue.Enqueue(cpuProcess);
+            }
+        }
+        else
+        {
+            SetSystemCallParameters(cpuProcess, "", "", "", "", "", "CLONE_FAILED");
+            readyQueue.Enqueue(cpuProcess);
+        }
+    }
+    else if (HAL9000Message.parameter1 == "RUN")
+    {
+        process = ReplaceProcessImage(cpuProcess, HAL9000Message.parameter3, HAL9000Message.parameter4);
+        if (process.pid != itos(-1))
+        {
+            cpuProcess.action = "PROCESS_DONE";
+            UpdatePartitionTable(cpuProcess.pid, cpuProcess.action);
+            if (cpuProcess.type == "FOREGROUND_PROCESS" && process.type == "BACKGROUND_PROCESS")
+            {
+                SendReturnStatusToHALshell(cpuProcess.pid, "", "foreground process image replaced by background process image");
+            }
+            SetSystemCallParameters(process, "", "", "", "", "", "");
+            readyQueue.Enqueue(process);
+        }
+        else
+        {
+            SetSystemCallParameters(cpuProcess, "", "", "", "", "", "RUN_FAILED");
+            readyQueue.Enqueue(cpuProcess);
+        }
     }
 
     cpuProcess = NullProcess();
@@ -628,6 +676,57 @@ void StartCpuScheduler()
     }
 
     return;
+}
+
+// Assignment 4:
+
+/*
+ * Function: CloneProcessImage
+ * 
+ * Input: The process descriptor of the parent process of a cloned child process.
+ * 
+ * Output: The process descriptor of the cloned child process.
+ * 
+ * This function clones a process, creating a nearly identical
+ * child process with a very similar process descriptor.
+ */
+processDescriptor CloneProcessImage(processDescriptor parentProcess)
+{
+    DBF;
+
+    processDescriptor childProcess;
+
+    if (ChildProcessImageToFile(itos(nextPid), parentProcess.pid))
+    {
+        // The child process is initially
+        // identical to its parent process
+        childProcess = parentProcess;
+
+        childProcess.pid = nextPid;
+        childProcess.type = "BACKGROUND_PROCESS";
+        childProcess.interruptCounter = 0;
+        childProcess.timerInterruptCounter = 0;
+        childProcess.systemCallInterruptCounter = 0;
+        childProcess.creationTime = GetClockTicks();
+        childProcess.runningTime = 0;
+
+        // Our cloned child process is using the current nextPid
+        ++nextPid;
+    }
+    else
+    {
+        childProcess = NullProcess();
+    }
+
+    DBF;
+    return childProcess;
+}
+
+bool ChildProcessImageToFile(string pid, string parentPid)
+{
+    DBF;
+
+    DBF;
 }
 
 // The "Communication Media"

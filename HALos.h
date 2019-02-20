@@ -114,8 +114,11 @@ void HandleHALdisplayDriverInterrupt();
 void HandleHALdiskDriverInterrupt();
 void SetSystemCallParameters(processDescriptor &process, string systemCall, string systemCallParameter1, string systemCallParameter2, string sytemcallParameter3, string systemCallBuffer, string systemCallResult);
 void RunCpuScheduler();
-void StartCpuScheduler();
 void StopCpuScheduler();
+void StartCpuScheduler();
+// Assignment 4:
+processDescriptor CloneProcessImage(processDescriptor parentProcess);
+bool ChildProcessImageToFile(string pid, string parentPid);
 
 // The "Communication Media"
 
