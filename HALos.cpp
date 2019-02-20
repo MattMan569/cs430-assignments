@@ -726,7 +726,48 @@ bool ChildProcessImageToFile(string pid, string parentPid)
 {
     DBF;
 
+    ifstream programFile;
+    ofstream processImageFile;
+    string processImageFileName;
+    string programLine;
+    size_t foundRunningTime;
+    size_t foundPid;
+    size_t foundParentPid;
+
+    foundRunningTime = 1;
+    foundPid = string::npos;
+    foundParentPid = string::npos;
+
+    // The input file is the parent process's backing store file
+    programFile.open((parentPid + "_backingstore").c_str());
+    if (!programFile)
+    {
+        DBF;
+        return false;
+    }
+
+    processImageFileName = pid + "_backingstore";
+    processImageFile.open(processImageFileName.c_str());
+    if (!processImageFile)
+    {
+        programFile.close();
+        DBF;
+        return false;
+    }
+
+    getline(programFile, programLine);
+    while (programFile)
+    {
+        programLine = InitializePidInProcessImage(pid, parentPid, programLine, foundPid, foundParentPid, foundRunningTime);
+        processImageFile << programLine << endl;
+        getline(programFile, programLine);
+    }
+
+    programFile.close();
+    processImageFile.close();
+
     DBF;
+    return true;
 }
 
 // The "Communication Media"
