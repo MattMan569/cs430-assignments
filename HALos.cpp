@@ -8,117 +8,131 @@
 #include "HALos.h"
 #include "HALosHALshellFileIO.h"
 
-
 // Debug output
 #define DEBUG_OUTPUT false
 #define DEBUG_FUNCTIONS false
 
 #if DEBUG_OUTPUT
-    #define DBO(x) do { std::cerr << "<" << __FUNCTION__ << ":" << __LINE__ << ">    "  << x; } while (false)
+#define DBO(x)                                                               \
+    do                                                                       \
+    {                                                                        \
+        std::cerr << "<" << __FUNCTION__ << ":" << __LINE__ << ">    " << x; \
+    } while (false)
 #else
-    #define DBO(x) do { NoOp; } while (false)
+#define DBO(x) \
+    do         \
+    {          \
+        NoOp;  \
+    } while (false)
 #endif
 #if DEBUG_FUNCTIONS
-    #define DBF do { std::cerr << "<" << __FUNCTION__ << ":" << __LINE__ << ">" << endl; } while (false)
+#define DBF                                                                 \
+    do                                                                      \
+    {                                                                       \
+        std::cerr << "<" << __FUNCTION__ << ":" << __LINE__ << ">" << endl; \
+    } while (false)
 #else
-    #define DBF do { NoOp; } while (false)
+#define DBF   \
+    do        \
+    {         \
+        NoOp; \
+    } while (false)
 #endif
-
 
 // The "Operating System"
 
-void HALos ()
+void HALos()
 {
     string type;
     string command;
-    string arguments [MAX_COMMAND_LINE_ARGUMENTS];
+    string arguments[MAX_COMMAND_LINE_ARGUMENTS];
 
     do
     {
-        BlockSignals ("HALos");
+        BlockSignals("HALos");
         if (messageFromHALshell) // command entered in HALshell
         {
             messageFromHALshell = 0;
-            command = GetMessageFromHALshell (arguments, type);
-            HandleCommand (command, arguments, type);
+            command = GetMessageFromHALshell(arguments, type);
+            HandleCommand(command, arguments, type);
         }
         else if (messageFromHAL9000)
         {
             messageFromHAL9000 = 0;
-            GetMessageFromHAL9000 ();
+            GetMessageFromHAL9000();
             if (HAL9000Message.type == "INTERRUPT") // from cpu
             {
-                HandleHAL9000Interrupt ();
+                HandleHAL9000Interrupt();
             }
             else if (HAL9000Message.type == "SYSTEM_CALL") // from running process
             {
-                HandleSystemCall ();
+                HandleSystemCall();
             }
-            ClearMessageParameters (HAL9000Message);
+            ClearMessageParameters(HAL9000Message);
         }
         else if (messageFromHALkeyboardDriver) // "INTERRUPT" from keyboard driver
         {
             messageFromHALkeyboardDriver = 0;
-            GetMessageFromHALkeyboardDriver ();
-            HandleHALkeyboardDriverInterrupt ();
-            ClearMessageParameters (HALkeyboardDriverMessage);
+            GetMessageFromHALkeyboardDriver();
+            HandleHALkeyboardDriverInterrupt();
+            ClearMessageParameters(HALkeyboardDriverMessage);
         }
         else if (messageFromHALdisplayDriver) // "INTERRUPT" from display driver
         {
             messageFromHALdisplayDriver = 0;
-            GetMessageFromHALdisplayDriver ();
-            HandleHALdisplayDriverInterrupt ();
-            ClearMessageParameters (HALdisplayDriverMessage);
+            GetMessageFromHALdisplayDriver();
+            HandleHALdisplayDriverInterrupt();
+            ClearMessageParameters(HALdisplayDriverMessage);
         }
         else if (messageFromHALdiskDriver) // "INTERRUPT" from disk driver
         {
             messageFromHALdiskDriver = 0;
-            GetMessageFromHALdiskDriver ();
-            HandleHALdiskDriverInterrupt ();
-            ClearMessageParameters (HALdiskDriverMessage);
+            GetMessageFromHALdiskDriver();
+            HandleHALdiskDriverInterrupt();
+            ClearMessageParameters(HALdiskDriverMessage);
         }
-        RunCpuScheduler ();
-        UnblockSignals ("HALos");
+        RunCpuScheduler();
+        UnblockSignals("HALos");
     } while (1);
 
     return;
 }
 
-void HandleCommand (string command, string arguments [], string type)
+void HandleCommand(string command, string arguments[], string type)
 {
     string result;
 
     if (command == "shutdown" || command == "restart")
     {
-        ShutdownAndRestart (command, arguments);
+        ShutdownAndRestart(command, arguments);
         // never returns!
     }
     else if (command == "cull")
     {
-        Cull (command, arguments);
+        Cull(command, arguments);
     }
     else if (command == "compile")
     {
-        Compile (arguments);
+        Compile(arguments);
     }
     else if (command == "stopcpuscheduler")
     {
-        StopCpuScheduler ();
+        StopCpuScheduler();
     }
     else if (command == "startcpuscheduler")
     {
-        startTime = time (NULL);
-        StartCpuScheduler ();
+        startTime = time(NULL);
+        StartCpuScheduler();
     }
     else
     {
-        HandleNewProcess (command, arguments, type);
+        HandleNewProcess(command, arguments, type);
     }
-     
+
     return;
 }
 
-void HandleNewProcess (string command, string arguments [], string type)
+void HandleNewProcess(string command, string arguments[], string type)
 {
     int i;
     int j;
@@ -128,29 +142,29 @@ void HandleNewProcess (string command, string arguments [], string type)
 
     if (type == "FOREGROUND_PROCESS" && !cpuScheduler)
     {
-        SendReturnStatusToHALshell ("", "error", "foreground process not created - cpu scheduler stopped");
+        SendReturnStatusToHALshell("", "error", "foreground process not created - cpu scheduler stopped");
         return;
     }
 
-    fileExtensionPosition = command.find (".halx");
+    fileExtensionPosition = command.find(".halx");
     if (fileExtensionPosition == string::npos)
     {
         command = command + ".halx";
     }
-    else if (command.substr (fileExtensionPosition, 5) != command.substr ((command.length () - 5), 5))
+    else if (command.substr(fileExtensionPosition, 5) != command.substr((command.length() - 5), 5))
     {
         command = command + ".halx";
     }
 
-    if (command [0] == '/')
+    if (command[0] == '/')
     {
-        command = command.substr (1);
+        command = command.substr(1);
     }
 
-    if (!stat (command.c_str (), &fileStatusBuffer))
+    if (!stat(command.c_str(), &fileStatusBuffer))
     {
-        process = NullProcess ();
-        process.pid = itos (nextPid);
+        process = NullProcess();
+        process.pid = itos(nextPid);
         process.type = type;
         process.action = "EXECUTE_NEW_PROCESS";
         process.command = command;
@@ -159,47 +173,47 @@ void HandleNewProcess (string command, string arguments [], string type)
         j = -1;
         while (i < MAX_COMMAND_LINE_ARGUMENTS)
         {
-            if (arguments [i].length () > 0)
+            if (arguments[i].length() > 0)
             {
-                if (arguments [i].substr (0, 9) == "priority=")
+                if (arguments[i].substr(0, 9) == "priority=")
                 {
-                    process.priority = atoi (arguments [i].substr (9).c_str ());
+                    process.priority = atoi(arguments[i].substr(9).c_str());
                 }
                 else
                 {
-                    j ++;
-                    process.arguments [j] = arguments [i];
+                    j++;
+                    process.arguments[j] = arguments[i];
                 }
             }
-            i ++;
+            i++;
         }
-        process.creationTime = GetClockTicks ();
+        process.creationTime = GetClockTicks();
         process.direction = "DOWN";
-        process.interruptCounter = cpuSchedulingPolicies [process.queueNo].interruptsUntilMoveDown + 1;
-        if (ProcessImageToFile (process.pid, process.command))
+        process.interruptCounter = cpuSchedulingPolicies[process.queueNo].interruptsUntilMoveDown + 1;
+        if (ProcessImageToFile(process.pid, process.command))
         {
-            readyQueue.Enqueue (process);
+            readyQueue.Enqueue(process);
             if (type == "BACKGROUND_PROCESS")
             {
-                SendReturnStatusToHALshell (itos (nextPid), "", "background process created");
+                SendReturnStatusToHALshell(itos(nextPid), "", "background process created");
             }
-            nextPid ++;
+            nextPid++;
         }
         else
         {
-            SendReturnStatusToHALshell ("", "error", "process not created");
+            SendReturnStatusToHALshell("", "error", "process not created");
         }
     }
     else
     {
-        SendReturnStatusToHALshell ("", "", "command not found");
+        SendReturnStatusToHALshell("", "", "command not found");
     }
 
     return;
 }
 
 // New version
-bool ProcessImageToFile (string pid, string command)
+bool ProcessImageToFile(string pid, string command)
 {
     ifstream programFile;
     ofstream processImageFile;
@@ -211,53 +225,53 @@ bool ProcessImageToFile (string pid, string command)
     foundRunningTime = string::npos;
     foundPid = string::npos;
 
-    programFile.open (command.c_str ());
+    programFile.open(command.c_str());
     if (!programFile)
     {
         return false;
     }
 
     processImageFileName = pid + "_backingstore";
-    processImageFile.open (processImageFileName.c_str ());
+    processImageFile.open(processImageFileName.c_str());
     if (!processImageFile)
     {
-        programFile.close ();
+        programFile.close();
         return false;
     }
 
-    getline (programFile, programLine);
+    getline(programFile, programLine);
     while (programFile)
     {
-        programLine = InitializePidInProcessImage (pid, programLine, foundPid, foundRunningTime);
+        programLine = InitializePidInProcessImage(pid, programLine, foundPid, foundRunningTime);
         processImageFile << programLine << endl;
-        getline (programFile, programLine);
+        getline(programFile, programLine);
     }
 
-    programFile.close ();
-    processImageFile.close ();
+    programFile.close();
+    processImageFile.close();
 
     return true;
 }
 
 // New version
-string InitializePidInProcessImage (string pid, string programLine,
-                                    size_t &foundPid, size_t &foundRunningTime)
+string InitializePidInProcessImage(string pid, string programLine,
+                                   size_t &foundPid, size_t &foundRunningTime)
 {
     if (foundRunningTime == string::npos)
     {
-        foundRunningTime = programLine.find ("RUNNING_TIME :");
+        foundRunningTime = programLine.find("RUNNING_TIME :");
         if (foundRunningTime != string::npos)
         {
-            programLine = programLine.substr (0, foundRunningTime);
+            programLine = programLine.substr(0, foundRunningTime);
             programLine = programLine + "RUNNING_TIME :0";
         }
     }
     else if (foundPid == string::npos)
     {
-        foundPid = programLine.find ("PID :");
+        foundPid = programLine.find("PID :");
         if (foundPid != string::npos)
         {
-            programLine = programLine.substr (0, foundPid);
+            programLine = programLine.substr(0, foundPid);
             programLine = programLine + "PID :" + pid;
         }
     }
@@ -265,71 +279,69 @@ string InitializePidInProcessImage (string pid, string programLine,
     return programLine;
 }
 
-void HandleHAL9000Interrupt ()
+void HandleHAL9000Interrupt()
 {
     if (HAL9000Message.parameter1 == "QUANTUM_EXPIRED")
     {
-        SetSystemCallParameters (cpuProcess, "", "", "", "", "" ,"");
-        cpuProcess.runningTime = cpuProcess.runningTime
-            + atoi (HAL9000Message.parameter7.c_str ());
-        cpuProcess.timerInterruptCounter ++;
+        SetSystemCallParameters(cpuProcess, "", "", "", "", "", "");
+        cpuProcess.runningTime = cpuProcess.runningTime + atoi(HAL9000Message.parameter7.c_str());
+        cpuProcess.timerInterruptCounter++;
         cpuProcess.action = "CONTINUE_EXECUTING_PROCESS";
-        readyQueue.Enqueue (cpuProcess);
+        readyQueue.Enqueue(cpuProcess);
     }
     else if (HAL9000Message.parameter1 == "PROCESS_DONE")
     {
-        endTime = time (NULL);
+        endTime = time(NULL);
         cpuProcess.action = "PROCESS_DONE";
-        cpuProcess.partitionNo = UpdatePartitionTable (cpuProcess.pid, cpuProcess.action);
-        remove ((cpuProcess.pid + "_backingstore").c_str ());
+        cpuProcess.partitionNo = UpdatePartitionTable(cpuProcess.pid, cpuProcess.action);
+        remove((cpuProcess.pid + "_backingstore").c_str());
 
         // Return running time
 
         // Print the "wall clock" running time (A3 P3)
         time_t wallClockRunningTime = endTime - startTime;
-        DBO ("Wall clock running time after [" << cpuProcess.pid << "] finished: " << wallClockRunningTime << endl);
+        DBO("Wall clock running time after [" << cpuProcess.pid << "] finished: " << wallClockRunningTime << endl);
 
         // TODO: remove after part 4
         cout << "<" << __FUNCTION__ << ":" << __LINE__ << ">    Wall clock running time after [" << cpuProcess.pid << "] finished: " << wallClockRunningTime << endl;
 
-        cpuProcess.runningTime = cpuProcess.runningTime
-            + atoi (HAL9000Message.parameter7.c_str ());
+        cpuProcess.runningTime = cpuProcess.runningTime + atoi(HAL9000Message.parameter7.c_str());
 
         string timingResults =
-            itos (cpuProcess.creationTime) + " " +
-            itos (cpuProcess.runningTime) + " " +
+            itos(cpuProcess.creationTime) + " " +
+            itos(cpuProcess.runningTime) + " " +
             HAL9000Message.parameter6 + " " +
-            itos (cpuProcess.timerInterruptCounter) + " " +
-            itos (cpuProcess.systemCallInterruptCounter);
+            itos(cpuProcess.timerInterruptCounter) + " " +
+            itos(cpuProcess.systemCallInterruptCounter);
 
         if (cpuProcess.type == "FOREGROUND_PROCESS")
         {
-            SendReturnStatusToHALshell (HAL9000Message.parameter2,
-                HAL9000Message.parameter3, timingResults);
+            SendReturnStatusToHALshell(HAL9000Message.parameter2,
+                                       HAL9000Message.parameter3, timingResults);
         }
         else if (cpuProcess.type == "BACKGROUND_PROCESS")
         {
             // Save to file
-            SaveReturnStatusForHALshell (HAL9000Message.parameter2,
-                HAL9000Message.parameter3, timingResults);
+            SaveReturnStatusForHALshell(HAL9000Message.parameter2,
+                                        HAL9000Message.parameter3, timingResults);
         }
         else
         {
             cout << "HALos: invalid cpu process type" << endl;
-            exit (1);
+            exit(1);
         }
     }
 
-    cpuProcess = NullProcess ();
+    cpuProcess = NullProcess();
 
     return;
 }
 
-void HandleSystemCall ()
+void HandleSystemCall()
 {
     fileDescriptor file;
 
-    cpuProcess.runningTime = cpuProcess.runningTime + atoi (HAL9000Message.parameter7.c_str ());
+    cpuProcess.runningTime = cpuProcess.runningTime + atoi(HAL9000Message.parameter7.c_str());
     cpuProcess.systemCallInterruptCounter++;
     cpuProcess.action = "CONTINUE_EXECUTING_PROCESS";
 
@@ -337,20 +349,20 @@ void HandleSystemCall ()
     {
         if (HAL9000Message.parameter3 == "keyboard" || HAL9000Message.parameter3 == "display")
         {
-            SetSystemCallParameters (cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter3, HAL9000Message.parameter5, "", "", "FILE_OPEN_OK");
-            readyQueue.Enqueue (cpuProcess);
+            SetSystemCallParameters(cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter3, HAL9000Message.parameter5, "", "", "FILE_OPEN_OK");
+            readyQueue.Enqueue(cpuProcess);
         }
         else // (HAL9000Message.parameter3 == some other file name)
         {
-            SetSystemCallParameters (cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter3, HAL9000Message.parameter4, HAL9000Message.parameter5, "", "");
-            if (diskProcess.pid == itos (-1) && diskQueue.IsEmpty ())
+            SetSystemCallParameters(cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter3, HAL9000Message.parameter4, HAL9000Message.parameter5, "", "");
+            if (diskProcess.pid == itos(-1) && diskQueue.IsEmpty())
             {
                 diskProcess = cpuProcess;
-                SendMessageToHALdiskDriver (diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter1, diskProcess.systemCallParameter3, "", "");
+                SendMessageToHALdiskDriver(diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter1, diskProcess.systemCallParameter3, "", "");
             }
             else
             {
-                diskQueue.Enqueue (cpuProcess);
+                diskQueue.Enqueue(cpuProcess);
             }
         }
     }
@@ -358,30 +370,30 @@ void HandleSystemCall ()
     {
         if (HAL9000Message.parameter3 == "keyboard")
         {
-            SetSystemCallParameters (cpuProcess, HAL9000Message.parameter1, "", "", "", "", "");
-            if (keyboardProcess.pid == itos (-1) && keyboardQueue.IsEmpty ())
+            SetSystemCallParameters(cpuProcess, HAL9000Message.parameter1, "", "", "", "", "");
+            if (keyboardProcess.pid == itos(-1) && keyboardQueue.IsEmpty())
             {
                 keyboardProcess = cpuProcess;
-                SendMessageToHALkeyboardDriver (keyboardProcess.pid, keyboardProcess.systemCall);
+                SendMessageToHALkeyboardDriver(keyboardProcess.pid, keyboardProcess.systemCall);
             }
             else
             {
-                keyboardQueue.Enqueue (cpuProcess);
+                keyboardQueue.Enqueue(cpuProcess);
             }
         }
         else // (HAL9000Message.parameter3 == some other file name)
         {
-            SetSystemCallParameters (cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter3, HAL9000Message.parameter4, "", "", "");
-            if (diskProcess.pid == itos (-1) && diskQueue.IsEmpty ())
+            SetSystemCallParameters(cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter3, HAL9000Message.parameter4, "", "", "");
+            if (diskProcess.pid == itos(-1) && diskQueue.IsEmpty())
             {
-                cpuProcess.fileTable.Find (HAL9000Message.parameter3, HAL9000Message.parameter4);
-                file = cpuProcess.fileTable.Read ();
+                cpuProcess.fileTable.Find(HAL9000Message.parameter3, HAL9000Message.parameter4);
+                file = cpuProcess.fileTable.Read();
                 diskProcess = cpuProcess;
-                SendMessageToHALdiskDriver (diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter1, "input", file.markerPosition, "");
+                SendMessageToHALdiskDriver(diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter1, "input", file.markerPosition, "");
             }
             else
             {
-                diskQueue.Enqueue (cpuProcess);
+                diskQueue.Enqueue(cpuProcess);
             }
         }
     }
@@ -389,30 +401,30 @@ void HandleSystemCall ()
     {
         if (HAL9000Message.parameter3 == "display")
         {
-            SetSystemCallParameters (cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter5, "", "", "", "");
-            if (displayProcess.pid == itos (-1) && displayQueue.IsEmpty ())
+            SetSystemCallParameters(cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter5, "", "", "", "");
+            if (displayProcess.pid == itos(-1) && displayQueue.IsEmpty())
             {
                 displayProcess = cpuProcess;
-                SendMessageToHALdisplayDriver (displayProcess.pid, displayProcess.systemCall, displayProcess.systemCallParameter1);
+                SendMessageToHALdisplayDriver(displayProcess.pid, displayProcess.systemCall, displayProcess.systemCallParameter1);
             }
             else
             {
-                displayQueue.Enqueue (cpuProcess);
+                displayQueue.Enqueue(cpuProcess);
             }
         }
         else // (HAL9000Message.parameter3 == some file name)
         {
-            SetSystemCallParameters (cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter5, HAL9000Message.parameter3, HAL9000Message.parameter4, "", "");
-            if (diskProcess.pid == itos (-1) && diskQueue.IsEmpty ())
+            SetSystemCallParameters(cpuProcess, HAL9000Message.parameter1, HAL9000Message.parameter5, HAL9000Message.parameter3, HAL9000Message.parameter4, "", "");
+            if (diskProcess.pid == itos(-1) && diskQueue.IsEmpty())
             {
-                cpuProcess.fileTable.Find (HAL9000Message.parameter3, HAL9000Message.parameter4);
-                file = cpuProcess.fileTable.Read ();
+                cpuProcess.fileTable.Find(HAL9000Message.parameter3, HAL9000Message.parameter4);
+                file = cpuProcess.fileTable.Read();
                 diskProcess = cpuProcess;
-                SendMessageToHALdiskDriver (diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter2, "output", "", diskProcess.systemCallParameter1);
+                SendMessageToHALdiskDriver(diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter2, "output", "", diskProcess.systemCallParameter1);
             }
             else
             {
-                diskQueue.Enqueue (cpuProcess);
+                diskQueue.Enqueue(cpuProcess);
             }
         }
     }
@@ -420,51 +432,51 @@ void HandleSystemCall ()
     {
         if (!(HAL9000Message.parameter3 == "keyboard") && !(HAL9000Message.parameter3 == "display"))
         {
-            cpuProcess.fileTable.Find (HAL9000Message.parameter3, HAL9000Message.parameter4);
-            cpuProcess.fileTable.Delete ();
+            cpuProcess.fileTable.Find(HAL9000Message.parameter3, HAL9000Message.parameter4);
+            cpuProcess.fileTable.Delete();
         }
-        SetSystemCallParameters (cpuProcess, "", "", "", "", "", "FILE_CLOSE_OK");
-        readyQueue.Enqueue (cpuProcess);
+        SetSystemCallParameters(cpuProcess, "", "", "", "", "", "FILE_CLOSE_OK");
+        readyQueue.Enqueue(cpuProcess);
     }
 
-    cpuProcess = NullProcess ();
+    cpuProcess = NullProcess();
 
     return;
 }
 
-void HandleHALkeyboardDriverInterrupt ()
+void HandleHALkeyboardDriverInterrupt()
 {
-    SetSystemCallParameters (keyboardProcess, "", "", "", "", HALkeyboardDriverMessage.parameter3, HALkeyboardDriverMessage.parameter4);
-    readyQueue.Enqueue (keyboardProcess);
+    SetSystemCallParameters(keyboardProcess, "", "", "", "", HALkeyboardDriverMessage.parameter3, HALkeyboardDriverMessage.parameter4);
+    readyQueue.Enqueue(keyboardProcess);
 
-    keyboardProcess = NullProcess ();
+    keyboardProcess = NullProcess();
 
-    if (!keyboardQueue.IsEmpty ())
+    if (!keyboardQueue.IsEmpty())
     {
-        keyboardProcess = keyboardQueue.Dequeue ();
-        SendMessageToHALkeyboardDriver (keyboardProcess.pid, keyboardProcess.systemCall);
+        keyboardProcess = keyboardQueue.Dequeue();
+        SendMessageToHALkeyboardDriver(keyboardProcess.pid, keyboardProcess.systemCall);
     }
 
     return;
 }
 
-void HandleHALdisplayDriverInterrupt ()
+void HandleHALdisplayDriverInterrupt()
 {
-    SetSystemCallParameters (displayProcess, "", "", "", "", "", "");
-    readyQueue.Enqueue (displayProcess);
+    SetSystemCallParameters(displayProcess, "", "", "", "", "", "");
+    readyQueue.Enqueue(displayProcess);
 
-    displayProcess = NullProcess ();
+    displayProcess = NullProcess();
 
-    if (!displayQueue.IsEmpty ())
+    if (!displayQueue.IsEmpty())
     {
-        displayProcess = displayQueue.Dequeue ();
-        SendMessageToHALdisplayDriver (displayProcess.pid, displayProcess.systemCall, displayProcess.systemCallParameter1);
+        displayProcess = displayQueue.Dequeue();
+        SendMessageToHALdisplayDriver(displayProcess.pid, displayProcess.systemCall, displayProcess.systemCallParameter1);
     }
 
     return;
 }
 
-void HandleHALdiskDriverInterrupt ()
+void HandleHALdiskDriverInterrupt()
 {
     fileDescriptor file;
 
@@ -472,56 +484,56 @@ void HandleHALdiskDriverInterrupt ()
     {
         if (HALdiskDriverMessage.parameter5 == "FILE_OPEN_OK")
         {
-            if (!diskProcess.fileTable.Find (diskProcess.systemCallParameter1, diskProcess.systemCallParameter2))
-            {  
-                diskProcess.fileTable.Insert (diskProcess.systemCallParameter1, diskProcess.systemCallParameter2, diskProcess.systemCallParameter3);
+            if (!diskProcess.fileTable.Find(diskProcess.systemCallParameter1, diskProcess.systemCallParameter2))
+            {
+                diskProcess.fileTable.Insert(diskProcess.systemCallParameter1, diskProcess.systemCallParameter2, diskProcess.systemCallParameter3);
             }
-            else 
+            else
             {
                 HALdiskDriverMessage.parameter5 = "FILE_ALREADY_OPEN";
             }
         }
-        SetSystemCallParameters (diskProcess, "", "", "", "", "", HALdiskDriverMessage.parameter5);
+        SetSystemCallParameters(diskProcess, "", "", "", "", "", HALdiskDriverMessage.parameter5);
     }
     else if (diskProcess.systemCall == "READ")
     {
-        diskProcess.fileTable.Find (diskProcess.systemCallParameter1, diskProcess.systemCallParameter2);
-        diskProcess.fileTable.Write (HALdiskDriverMessage.parameter3);
-        SetSystemCallParameters (diskProcess, "", "", "", "", HALdiskDriverMessage.parameter4, HALdiskDriverMessage.parameter5);
+        diskProcess.fileTable.Find(diskProcess.systemCallParameter1, diskProcess.systemCallParameter2);
+        diskProcess.fileTable.Write(HALdiskDriverMessage.parameter3);
+        SetSystemCallParameters(diskProcess, "", "", "", "", HALdiskDriverMessage.parameter4, HALdiskDriverMessage.parameter5);
     }
     else if (diskProcess.systemCall == "WRITE" || diskProcess.systemCall == "NEWLINE")
     {
-        SetSystemCallParameters (diskProcess, "", "", "", "", "", HALdiskDriverMessage.parameter5);
+        SetSystemCallParameters(diskProcess, "", "", "", "", "", HALdiskDriverMessage.parameter5);
     }
-    readyQueue.Enqueue (diskProcess);
+    readyQueue.Enqueue(diskProcess);
 
-    diskProcess = NullProcess ();
+    diskProcess = NullProcess();
 
-    if (!diskQueue.IsEmpty ())
+    if (!diskQueue.IsEmpty())
     {
-        diskProcess = diskQueue.Dequeue ();
+        diskProcess = diskQueue.Dequeue();
         if (diskProcess.systemCall == "OPEN")
         {
-            SendMessageToHALdiskDriver (diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter1, diskProcess.systemCallParameter3, "", "");
+            SendMessageToHALdiskDriver(diskProcess.pid, diskProcess.systemCall, diskProcess.systemCallParameter1, diskProcess.systemCallParameter3, "", "");
         }
         else
         {
             if (diskProcess.systemCall == "READ")
             {
-                diskProcess.fileTable.Find (diskProcess.systemCallParameter1, diskProcess.systemCallParameter2);
+                diskProcess.fileTable.Find(diskProcess.systemCallParameter1, diskProcess.systemCallParameter2);
             }
             else // (diskProcess.systemCall == "WRITE" || "NEWLINE")
             {
-                diskProcess.fileTable.Find (diskProcess.systemCallParameter2, diskProcess.systemCallParameter3);
-            }              
-            file = diskProcess.fileTable.Read ();
+                diskProcess.fileTable.Find(diskProcess.systemCallParameter2, diskProcess.systemCallParameter3);
+            }
+            file = diskProcess.fileTable.Read();
             if (file.mode == "input")
             {
-                SendMessageToHALdiskDriver (diskProcess.pid, diskProcess.systemCall, file.name, file.mode, file.markerPosition, "");
+                SendMessageToHALdiskDriver(diskProcess.pid, diskProcess.systemCall, file.name, file.mode, file.markerPosition, "");
             }
             else
             {
-                SendMessageToHALdiskDriver (diskProcess.pid, diskProcess.systemCall, file.name, file.mode, "", diskProcess.systemCallParameter1);
+                SendMessageToHALdiskDriver(diskProcess.pid, diskProcess.systemCall, file.name, file.mode, "", diskProcess.systemCallParameter1);
             }
         }
     }
@@ -529,7 +541,7 @@ void HandleHALdiskDriverInterrupt ()
     return;
 }
 
-void SetSystemCallParameters (processDescriptor &process, string systemCall, string systemCallParameter1, string systemCallParameter2, string systemCallParameter3, string systemCallBuffer, string systemCallResult)
+void SetSystemCallParameters(processDescriptor &process, string systemCall, string systemCallParameter1, string systemCallParameter2, string systemCallParameter3, string systemCallBuffer, string systemCallResult)
 {
     process.systemCall = systemCall;
     process.systemCallParameter1 = systemCallParameter1;
@@ -541,66 +553,66 @@ void SetSystemCallParameters (processDescriptor &process, string systemCall, str
     return;
 }
 
-void RunCpuScheduler ()
+void RunCpuScheduler()
 {
     if (!cpuScheduler)
     {
         return;
     }
 
-    if (cpuProcess.pid == itos (-1))
+    if (cpuProcess.pid == itos(-1))
     {
-        if (readyQueue.IsEmpty ())
+        if (readyQueue.IsEmpty())
         {
             NoOp;
         }
         else
         {
-            cpuProcess = readyQueue.Dequeue ();
+            cpuProcess = readyQueue.Dequeue();
 
             if (cpuProcess.action == "CONTINUE_EXECUTING_PROCESS")
             {
-                cpuProcess = readyQueue.SetQueueNo (cpuProcess);
+                cpuProcess = readyQueue.SetQueueNo(cpuProcess);
             }
-            cpuProcess.quantumLength = cpuSchedulingPolicies [cpuProcess.queueNo].quantumLengthMultiplier * QUANTUM_LENGTH;
-            cpuProcess.quantumLength = cpuProcess.quantumLength + RandomQuantumLengthAdjustment (cpuProcess.quantumLength);
-            cpuProcess.partitionNo = UpdatePartitionTable (cpuProcess.pid, cpuProcess.action);
-            SendMessageToHAL9000 (cpuProcess);
+            cpuProcess.quantumLength = cpuSchedulingPolicies[cpuProcess.queueNo].quantumLengthMultiplier * QUANTUM_LENGTH;
+            cpuProcess.quantumLength = cpuProcess.quantumLength + RandomQuantumLengthAdjustment(cpuProcess.quantumLength);
+            cpuProcess.partitionNo = UpdatePartitionTable(cpuProcess.pid, cpuProcess.action);
+            SendMessageToHAL9000(cpuProcess);
         }
     }
 
     return;
 }
 
-void StopCpuScheduler ()
+void StopCpuScheduler()
 {
     if (!cpuScheduler)
     {
-        SendReturnStatusToHALshell (itos (nextPid), "ok", "cpu scheduler already stopped");
-        nextPid ++;
+        SendReturnStatusToHALshell(itos(nextPid), "ok", "cpu scheduler already stopped");
+        nextPid++;
     }
     else
     {
         cpuScheduler = false;
-        SendReturnStatusToHALshell (itos (nextPid), "ok", "cpu scheduler stopped");
-        nextPid ++;
+        SendReturnStatusToHALshell(itos(nextPid), "ok", "cpu scheduler stopped");
+        nextPid++;
     }
 
     return;
 }
 
-void StartCpuScheduler ()
+void StartCpuScheduler()
 {
     if (cpuScheduler)
     {
-        SendReturnStatusToHALshell (itos (nextPid), "ok", "cpu scheduler already started");
-        nextPid ++;
+        SendReturnStatusToHALshell(itos(nextPid), "ok", "cpu scheduler already started");
+        nextPid++;
     }
     else
     {
         cpuScheduler = true;
-        SendReturnStatusToHALshell (itos (nextPid), "ok", "cpu scheduler started");
-        nextPid ++;
+        SendReturnStatusToHALshell(itos(nextPid), "ok", "cpu scheduler started");
+        nextPid++;
     }
 
     return;
@@ -608,73 +620,73 @@ void StartCpuScheduler ()
 
 // The "Communication Media"
 
-string GetMessageFromHALshell (string arguments [], string &type)
+string GetMessageFromHALshell(string arguments[], string &type)
 {
     ifstream commandLineFile;
     string command;
     int i;
 
-    for (i = 0; i < MAX_COMMAND_LINE_ARGUMENTS; i ++)
+    for (i = 0; i < MAX_COMMAND_LINE_ARGUMENTS; i++)
     {
-        arguments [i] = "";
+        arguments[i] = "";
     }
 
-    commandLineFile.open ("HALshellToHALos");
+    commandLineFile.open("HALshellToHALos");
     if (!commandLineFile)
     {
         cout << "HALos: connection to HALshell failed" << endl;
-        exit (1);
+        exit(1);
     }
-    if (getline (commandLineFile, command))
+    if (getline(commandLineFile, command))
     {
         i = 0;
-        while (getline (commandLineFile, arguments [i]))
+        while (getline(commandLineFile, arguments[i]))
         {
-            i ++;
+            i++;
         }
     }
     else
     {
         cout << "HALos: command received from HALshell corrupted" << endl;
-        exit (1);
+        exit(1);
     }
-    commandLineFile.close ();
+    commandLineFile.close();
 
     type = "FOREGROUND_PROCESS";
     if (i > 0)
     {
-        i --;
-        if (arguments [i] == "-")
+        i--;
+        if (arguments[i] == "-")
         {
             type = "BACKGROUND_PROCESS";
-            arguments [i] = "";
+            arguments[i] = "";
         }
     }
 
     return command;
 }
 
-void SendReturnStatusToHALshell (string pid, string returnValue, string message)
-{    
+void SendReturnStatusToHALshell(string pid, string returnValue, string message)
+{
     ofstream returnStatusFile;
     union sigval dummyValue;
-   
-    returnStatusFile.open ("HALosToHALshell");
+
+    returnStatusFile.open("HALosToHALshell");
     if (!returnStatusFile)
     {
         cout << "HALos: unable to initialize return status buffer" << endl;
-        exit (1);
+        exit(1);
     }
 
     returnStatusFile << pid << endl;
     returnStatusFile << returnValue << endl;
     returnStatusFile << message << endl;
-    returnStatusFile.close ();
+    returnStatusFile.close();
 
-    if (sigqueue (HALshellPid, SIGRTMIN, dummyValue) == -1)
+    if (sigqueue(HALshellPid, SIGRTMIN, dummyValue) == -1)
     {
         cout << "HALos: return code signal not sent to HALshell" << endl;
-        exit (1);
+        exit(1);
     }
 
     return;
@@ -700,7 +712,7 @@ void SaveReturnStatusForHALshell(string pid, string returnValue, string message)
     return;
 }
 
-void GetMessageFromHAL9000 ()
+void GetMessageFromHAL9000()
 {
     static int seqNo = 0;
     static string fileNamePrefix = "HAL9000ToHALos_";
@@ -709,34 +721,34 @@ void GetMessageFromHAL9000 ()
 
     if (seqNo > 0)
     {
-        remove (fileName.c_str ());
+        remove(fileName.c_str());
     }
 
-    seqNo ++;
-    fileName = fileNamePrefix + itos (seqNo);
-    hal9000MessageFile.open (fileName.c_str ());
+    seqNo++;
+    fileName = fileNamePrefix + itos(seqNo);
+    hal9000MessageFile.open(fileName.c_str());
     if (!hal9000MessageFile)
     {
         cout << "HALos: connection to HAL9000 failed" << endl;
-        exit (1);
+        exit(1);
     }
 
-    getline (hal9000MessageFile, HAL9000Message.type);
-    getline (hal9000MessageFile, HAL9000Message.parameter1);
-    getline (hal9000MessageFile, HAL9000Message.parameter2);
-    getline (hal9000MessageFile, HAL9000Message.parameter3);
-    getline (hal9000MessageFile, HAL9000Message.parameter4);
-    getline (hal9000MessageFile, HAL9000Message.parameter5);
-    getline (hal9000MessageFile, HAL9000Message.parameter6);
-    getline (hal9000MessageFile, HAL9000Message.parameter7);
+    getline(hal9000MessageFile, HAL9000Message.type);
+    getline(hal9000MessageFile, HAL9000Message.parameter1);
+    getline(hal9000MessageFile, HAL9000Message.parameter2);
+    getline(hal9000MessageFile, HAL9000Message.parameter3);
+    getline(hal9000MessageFile, HAL9000Message.parameter4);
+    getline(hal9000MessageFile, HAL9000Message.parameter5);
+    getline(hal9000MessageFile, HAL9000Message.parameter6);
+    getline(hal9000MessageFile, HAL9000Message.parameter7);
 
     if (!hal9000MessageFile)
     {
         cout << "HALos: message not received from HAL9000" << endl;
-        exit (1);
+        exit(1);
     }
 
-    #ifdef HAL9000_MESSAGE_TRACE_ON
+#ifdef HAL9000_MESSAGE_TRACE_ON
     {
         cout << endl;
         if (HAL9000Message.type == "EXECUTING_PROCESS_PAUSED" || HAL9000Message.type == "NO_EXECUTING_PROCESS")
@@ -756,9 +768,9 @@ void GetMessageFromHAL9000 ()
         cout << "    parameter6 = " << HAL9000Message.parameter6 << endl;
         cout << "    parameter7 = " << HAL9000Message.parameter7 << endl;
     }
-    #endif
+#endif
 
-    hal9000MessageFile.close ();
+    hal9000MessageFile.close();
 
     if (seqNo == INT_MAX)
     {
@@ -768,7 +780,7 @@ void GetMessageFromHAL9000 ()
     return;
 }
 
-void SendMessageToHAL9000 (processDescriptor process)
+void SendMessageToHAL9000(processDescriptor process)
 {
     static int seqNo = 0;
     static string fileNamePrefix = "HALosToHAL9000_";
@@ -777,28 +789,28 @@ void SendMessageToHAL9000 (processDescriptor process)
     int i;
     union sigval dummyValue;
 
-    seqNo ++;
-    fileName = fileNamePrefix + itos (seqNo);
-    halOsMessageFile.open (fileName.c_str ());
+    seqNo++;
+    fileName = fileNamePrefix + itos(seqNo);
+    halOsMessageFile.open(fileName.c_str());
     if (!halOsMessageFile)
     {
         cout << "HALos: unable to initialize HAL9000 message buffer" << endl;
-        exit (1);
+        exit(1);
     }
 
     halOsMessageFile << process.action << endl;
     halOsMessageFile << process.pid << endl;
     halOsMessageFile << process.command << endl;
-    for (i = 0; i < MAX_COMMAND_LINE_ARGUMENTS; i ++)
+    for (i = 0; i < MAX_COMMAND_LINE_ARGUMENTS; i++)
     {
-        halOsMessageFile << process.arguments [i] << endl;
+        halOsMessageFile << process.arguments[i] << endl;
     }
     halOsMessageFile << process.systemCallBuffer << endl;
     halOsMessageFile << process.systemCallResult << endl;
     halOsMessageFile << process.quantumLength << endl;
     halOsMessageFile << process.partitionNo << endl;
 
-    #ifdef HAL9000_MESSAGE_TRACE_ON
+#ifdef HAL9000_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: sending message to HAL9000 for pid = " << process.pid << endl;
@@ -810,14 +822,14 @@ void SendMessageToHAL9000 (processDescriptor process)
         cout << "    quantumLength = " << process.quantumLength << endl;
         cout << "    partitionNo = " << process.partitionNo << endl;
     }
-    #endif
+#endif
 
-    halOsMessageFile.close ();
+    halOsMessageFile.close();
 
-    if (sigqueue (HAL9000Pid, SIGRTMIN, dummyValue) == -1)
+    if (sigqueue(HAL9000Pid, SIGRTMIN, dummyValue) == -1)
     {
         cout << "HALos: message not sent to HAL9000" << endl;
-        exit (1);
+        exit(1);
     }
 
     if (seqNo == INT_MAX)
@@ -828,22 +840,22 @@ void SendMessageToHAL9000 (processDescriptor process)
     return;
 }
 
-void GetMessageFromHALkeyboardDriver ()
+void GetMessageFromHALkeyboardDriver()
 {
     ifstream halKeyboardDriverMessageFile;
 
-    halKeyboardDriverMessageFile.open ("HALkeyboardDriverToHALos");
+    halKeyboardDriverMessageFile.open("HALkeyboardDriverToHALos");
     if (!halKeyboardDriverMessageFile)
     {
         cout << "HALos: connection to HALkeyboardDriver failed" << endl;
-        exit (1);
+        exit(1);
     }
 
-    getline (halKeyboardDriverMessageFile, HALkeyboardDriverMessage.type);
-    getline (halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter1);
-    getline (halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter2);
-    getline (halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter3);
-    getline (halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter4);
+    getline(halKeyboardDriverMessageFile, HALkeyboardDriverMessage.type);
+    getline(halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter1);
+    getline(halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter2);
+    getline(halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter3);
+    getline(halKeyboardDriverMessageFile, HALkeyboardDriverMessage.parameter4);
     HALkeyboardDriverMessage.parameter5 = "";
     HALkeyboardDriverMessage.parameter6 = "";
     HALkeyboardDriverMessage.parameter7 = "";
@@ -851,10 +863,10 @@ void GetMessageFromHALkeyboardDriver ()
     if (!halKeyboardDriverMessageFile)
     {
         cout << "HALos: message not received from HALkeyboardDriver" << endl;
-        exit (1);
+        exit(1);
     }
 
-    #ifdef HALkeyboardDriver_MESSAGE_TRACE_ON
+#ifdef HALkeyboardDriver_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: received message from HALkeyboardDriver for pid = " << HALkeyboardDriverMessage.parameter2 << endl;
@@ -864,61 +876,61 @@ void GetMessageFromHALkeyboardDriver ()
         cout << "    parameter3 = " << HALkeyboardDriverMessage.parameter3 << endl;
         cout << "    parameter4 = " << HALkeyboardDriverMessage.parameter4 << endl;
     }
-    #endif
+#endif
 
-    halKeyboardDriverMessageFile.close ();
+    halKeyboardDriverMessageFile.close();
 
     return;
 }
 
-void SendMessageToHALkeyboardDriver (string pid, string systemCall)
+void SendMessageToHALkeyboardDriver(string pid, string systemCall)
 {
     ofstream halOsMessageFile;
     union sigval dummyValue;
 
-    halOsMessageFile.open ("HALosToHALkeyboardDriver");
+    halOsMessageFile.open("HALosToHALkeyboardDriver");
     if (!halOsMessageFile)
     {
         cout << "HALos: unable to initialize HALkeyboardDriver message buffer" << endl;
-        exit (1);
+        exit(1);
     }
 
     halOsMessageFile << pid << endl;
     halOsMessageFile << systemCall << endl;
 
-    #ifdef HALkeyboardDriver_MESSAGE_TRACE_ON
+#ifdef HALkeyboardDriver_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: sending message to HALkeyboardDriver for pid = " << pid << endl;
         cout << "    systemCall = " << systemCall << endl;
     }
-    #endif
+#endif
 
-    halOsMessageFile.close ();
+    halOsMessageFile.close();
 
-    if (sigqueue (HALkeyboardDriverPid, SIGRTMIN, dummyValue) == -1)
+    if (sigqueue(HALkeyboardDriverPid, SIGRTMIN, dummyValue) == -1)
     {
         cout << "HALos: message not sent to HALkeyboardDriver" << endl;
-        exit (1);
+        exit(1);
     }
 
     return;
 }
 
-void GetMessageFromHALdisplayDriver ()
+void GetMessageFromHALdisplayDriver()
 {
     ifstream halDisplayDriverMessageFile;
 
-    halDisplayDriverMessageFile.open ("HALdisplayDriverToHALos");
+    halDisplayDriverMessageFile.open("HALdisplayDriverToHALos");
     if (!halDisplayDriverMessageFile)
     {
         cout << "HALos: connection to HALdisplayDriver failed" << endl;
-        exit (1);
+        exit(1);
     }
 
-    getline (halDisplayDriverMessageFile, HALdisplayDriverMessage.type);
-    getline (halDisplayDriverMessageFile, HALdisplayDriverMessage.parameter1);
-    getline (halDisplayDriverMessageFile, HALdisplayDriverMessage.parameter2);
+    getline(halDisplayDriverMessageFile, HALdisplayDriverMessage.type);
+    getline(halDisplayDriverMessageFile, HALdisplayDriverMessage.parameter1);
+    getline(halDisplayDriverMessageFile, HALdisplayDriverMessage.parameter2);
     HALdisplayDriverMessage.parameter3 = "";
     HALdisplayDriverMessage.parameter4 = "";
     HALdisplayDriverMessage.parameter5 = "";
@@ -928,10 +940,10 @@ void GetMessageFromHALdisplayDriver ()
     if (!halDisplayDriverMessageFile)
     {
         cout << "HALos: message not received from HALdisplayDriver" << endl;
-        exit (1);
+        exit(1);
     }
 
-    #ifdef HALdisplayDriver_MESSAGE_TRACE_ON
+#ifdef HALdisplayDriver_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: received message from HALdisplayDriver for pid = " << HALdisplayDriverMessage.parameter2 << endl;
@@ -939,50 +951,50 @@ void GetMessageFromHALdisplayDriver ()
         cout << "    parameter1 = " << HALdisplayDriverMessage.parameter1 << endl;
         cout << "    parameter2 = " << HALdisplayDriverMessage.parameter2 << endl;
     }
-    #endif
+#endif
 
-    halDisplayDriverMessageFile.close ();
+    halDisplayDriverMessageFile.close();
 
     return;
 }
 
-void SendMessageToHALdisplayDriver (string pid, string systemCall, string buffer)
+void SendMessageToHALdisplayDriver(string pid, string systemCall, string buffer)
 {
     ofstream halOsMessageFile;
     union sigval dummyValue;
 
-    halOsMessageFile.open ("HALosToHALdisplayDriver");
+    halOsMessageFile.open("HALosToHALdisplayDriver");
     if (!halOsMessageFile)
     {
         cout << "HALos: unable to initialize HALdisplayDriver message buffer" << endl;
-        exit (1);
+        exit(1);
     }
 
     halOsMessageFile << pid << endl;
     halOsMessageFile << systemCall << endl;
     halOsMessageFile << buffer << endl;
 
-    #ifdef HALdisplayDriver_MESSAGE_TRACE_ON
+#ifdef HALdisplayDriver_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: sending message to HALdisplayDriver for pid = " << pid << endl;
         cout << "    systemCall = " << systemCall << endl;
         cout << "    buffer = " << buffer << endl;
     }
-    #endif
+#endif
 
-    halOsMessageFile.close ();
+    halOsMessageFile.close();
 
-    if (sigqueue (HALdisplayDriverPid, SIGRTMIN, dummyValue) == -1)
+    if (sigqueue(HALdisplayDriverPid, SIGRTMIN, dummyValue) == -1)
     {
         cout << "HALos: message not sent to HALdisplayDriver" << endl;
-        exit (1);
+        exit(1);
     }
 
     return;
 }
 
-void GetMessageFromHALdiskDriver ()
+void GetMessageFromHALdiskDriver()
 {
     static int seqNo = 0;
     static string fileNamePrefix = "HALdiskDriverToHALos_";
@@ -991,28 +1003,28 @@ void GetMessageFromHALdiskDriver ()
 
     if (seqNo > 0)
     {
-        remove (fileName.c_str ());
+        remove(fileName.c_str());
     }
 
-    seqNo ++;
-    fileName = fileNamePrefix + itos (seqNo);
-    halDiskDriverMessageFile.open (fileName.c_str ());
+    seqNo++;
+    fileName = fileNamePrefix + itos(seqNo);
+    halDiskDriverMessageFile.open(fileName.c_str());
     if (!halDiskDriverMessageFile)
     {
         cout << "HALos: connection to HALdiskDriver failed" << endl;
-        exit (1);
+        exit(1);
     }
 
-    getline (halDiskDriverMessageFile, HALdiskDriverMessage.type);
-    getline (halDiskDriverMessageFile, HALdiskDriverMessage.parameter1);
-    getline (halDiskDriverMessageFile, HALdiskDriverMessage.parameter2);
-    getline (halDiskDriverMessageFile, HALdiskDriverMessage.parameter3);
-    getline (halDiskDriverMessageFile, HALdiskDriverMessage.parameter4);
-    getline (halDiskDriverMessageFile, HALdiskDriverMessage.parameter5);
+    getline(halDiskDriverMessageFile, HALdiskDriverMessage.type);
+    getline(halDiskDriverMessageFile, HALdiskDriverMessage.parameter1);
+    getline(halDiskDriverMessageFile, HALdiskDriverMessage.parameter2);
+    getline(halDiskDriverMessageFile, HALdiskDriverMessage.parameter3);
+    getline(halDiskDriverMessageFile, HALdiskDriverMessage.parameter4);
+    getline(halDiskDriverMessageFile, HALdiskDriverMessage.parameter5);
     HALdiskDriverMessage.parameter6 = "";
     HALdiskDriverMessage.parameter7 = "";
 
-    #ifdef HALdiskDriver_MESSAGE_TRACE_ON
+#ifdef HALdiskDriver_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: received message from HALdiskDriver for pid = " << HALdiskDriverMessage.parameter2 << endl;
@@ -1050,15 +1062,15 @@ void GetMessageFromHALdiskDriver ()
             cout << "    mode = " << HALdiskDriverMessage.parameter5 << endl;
         }
     }
-    #endif
+#endif
 
     if (!halDiskDriverMessageFile)
     {
         cout << "HALos: message not received from HALdiskDriver" << endl;
-        exit (1);
+        exit(1);
     }
 
-    halDiskDriverMessageFile.close ();
+    halDiskDriverMessageFile.close();
 
     if (seqNo == INT_MAX)
     {
@@ -1068,16 +1080,16 @@ void GetMessageFromHALdiskDriver ()
     return;
 }
 
-void SendMessageToHALdiskDriver (string pid, string systemCall, string fileName, string mode, string markerPosition, string buffer)
+void SendMessageToHALdiskDriver(string pid, string systemCall, string fileName, string mode, string markerPosition, string buffer)
 {
     ofstream halOsMessageFile;
     union sigval dummyValue;
 
-    halOsMessageFile.open ("HALosToHALdiskDriver");
+    halOsMessageFile.open("HALosToHALdiskDriver");
     if (!halOsMessageFile)
     {
         cout << "HALos: unable to initialize HALdiskDriver message buffer" << endl;
-        exit (1);
+        exit(1);
     }
 
     halOsMessageFile << pid << endl;
@@ -1087,7 +1099,7 @@ void SendMessageToHALdiskDriver (string pid, string systemCall, string fileName,
     halOsMessageFile << markerPosition << endl;
     halOsMessageFile << buffer << endl;
 
-    #ifdef HALdiskDriver_MESSAGE_TRACE_ON
+#ifdef HALdiskDriver_MESSAGE_TRACE_ON
     {
         cout << endl;
         cout << "HALos: sending message to HALdiskDriver for pid = " << pid << endl;
@@ -1097,14 +1109,14 @@ void SendMessageToHALdiskDriver (string pid, string systemCall, string fileName,
         cout << "    markerPosition = " << markerPosition << endl;
         cout << "    buffer = " << buffer << endl;
     }
-    #endif
+#endif
 
-    halOsMessageFile.close ();
+    halOsMessageFile.close();
 
-    if (sigqueue (HALdiskDriverPid, SIGRTMIN, dummyValue) == -1)
+    if (sigqueue(HALdiskDriverPid, SIGRTMIN, dummyValue) == -1)
     {
         cout << "HALos: message not sent to HALdiskDriver" << endl;
-        exit (1);
+        exit(1);
     }
 
     return;
@@ -1112,7 +1124,7 @@ void SendMessageToHALdiskDriver (string pid, string systemCall, string fileName,
 
 // Miscellaneous Functions and Procedures
 
-void ClearMessageParameters (message &halMessage)
+void ClearMessageParameters(message &halMessage)
 {
     halMessage.type = "";
     halMessage.parameter1 = "";
@@ -1126,10 +1138,10 @@ void ClearMessageParameters (message &halMessage)
     return;
 }
 
-int UpdatePartitionTable (string pid, string &action)
+int UpdatePartitionTable(string pid, string &action)
 {
     DBF;
-    DBO ("PID[" << pid << "]    " << action << endl);
+    DBO("PID[" << pid << "]    " << action << endl);
 
     // Print the contents of the partitions (debug)
 #if DEBUG_OUTPUT
@@ -1138,7 +1150,7 @@ int UpdatePartitionTable (string pid, string &action)
          partitionTable.Iterate())
     {
         partitionDescriptor pd = partitionTable.Read();
-        DBO ("P: " << partitionTable.GetP() << "    PID: " << pd.pid << "    Age: " << pd.age << endl);
+        DBO("P: " << partitionTable.GetP() << "    PID: " << pd.pid << "    Age: " << pd.age << endl);
     }
 #endif
 
@@ -1146,7 +1158,7 @@ int UpdatePartitionTable (string pid, string &action)
 
     if (action == "EXECUTE_NEW_PROCESS")
     {
-        DBO ("Executing new process " << pid << endl);
+        DBO("Executing new process " << pid << endl);
 
         partitionTable.IncrementAges();
 
@@ -1158,7 +1170,7 @@ int UpdatePartitionTable (string pid, string &action)
             // Insert into the empty partition
             if (partitionTable.Read().pid == 0)
             {
-                DBO ("Empty partition found at: " << partitionTable.GetP() << endl);
+                DBO("Empty partition found at: " << partitionTable.GetP() << endl);
 
                 partitionTable.Insert(atoi(pid.c_str()));
                 partitionNo = partitionTable.GetP();
@@ -1173,7 +1185,7 @@ int UpdatePartitionTable (string pid, string &action)
         // Find the oldest process and swap it out
         partitionTable.FindOldest();
 
-        DBO ("Using occupied partition at: " << partitionTable.GetP() << endl);
+        DBO("Using occupied partition at: " << partitionTable.GetP() << endl);
 
         partitionTable.Insert(atoi(pid.c_str()));
         partitionNo = partitionTable.GetP();
@@ -1184,14 +1196,14 @@ int UpdatePartitionTable (string pid, string &action)
     }
     else if (action == "CONTINUE_EXECUTING_PROCESS")
     {
-        DBO ("Continuing to execute process " << pid << endl);
+        DBO("Continuing to execute process " << pid << endl);
 
         partitionTable.IncrementAges();
 
         // Check if the process is already in the partition table
         if (partitionTable.Find(atoi(pid.c_str())))
         {
-            DBO ("At: " << partitionTable.GetP() << endl);
+            DBO("At: " << partitionTable.GetP() << endl);
 
             action = "CONTINUE_EXECUTING_PROCESS_IN_SAME_PARTITION";
             partitionNo = partitionTable.GetP();
@@ -1208,7 +1220,7 @@ int UpdatePartitionTable (string pid, string &action)
             // Insert into the empty partition
             if (partitionTable.Read().pid == 0)
             {
-                DBO ("Empty partition found at: " << partitionTable.GetP() << endl);
+                DBO("Empty partition found at: " << partitionTable.GetP() << endl);
 
                 partitionTable.Insert(atoi(pid.c_str()));
                 partitionNo = partitionTable.GetP();
@@ -1223,7 +1235,7 @@ int UpdatePartitionTable (string pid, string &action)
         // Find the oldest process and swap it out
         partitionTable.FindOldest();
 
-        DBO ("Using occupied partition at: " << partitionTable.GetP() << endl);
+        DBO("Using occupied partition at: " << partitionTable.GetP() << endl);
 
         partitionTable.Insert(atoi(pid.c_str()));
         partitionNo = partitionTable.GetP();
@@ -1234,12 +1246,12 @@ int UpdatePartitionTable (string pid, string &action)
     }
     else if (action == "PROCESS_DONE" || action == "PROCESS_CULLED")
     {
-        DBO ("Finished executing process " << pid << endl);
+        DBO("Finished executing process " << pid << endl);
 
         // Find the process and delete it
         if (partitionTable.Find(atoi(pid.c_str())))
         {
-            DBO ("At: " << partitionTable.GetP() << endl);
+            DBO("At: " << partitionTable.GetP() << endl);
 
             partitionNo = partitionTable.GetP();
             partitionTable.Delete();
@@ -1250,7 +1262,7 @@ int UpdatePartitionTable (string pid, string &action)
         else if (action == "PROCESS_DONE")
         {
             cout << "<" << __FUNCTION__ << ":" << __LINE__ << ">    ERROR: Finished process not found" << endl;
-            exit (1);
+            exit(1);
         }
         else
         {
@@ -1262,22 +1274,22 @@ int UpdatePartitionTable (string pid, string &action)
     else
     {
         cout << "<" << __FUNCTION__ << ":" << __LINE__ << ">    ERROR: Illegal action" << endl;
-        exit (1);
+        exit(1);
     }
 }
 
-processDescriptor NullProcess ()
+processDescriptor NullProcess()
 {
     processDescriptor process;
     int i;
 
-    process.pid = itos (-1);
+    process.pid = itos(-1);
     process.type = "";
     process.action = "";
     process.command = "";
-    for (i = 0; i < MAX_COMMAND_LINE_ARGUMENTS; i ++)
+    for (i = 0; i < MAX_COMMAND_LINE_ARGUMENTS; i++)
     {
-        process.arguments [i] = "";
+        process.arguments[i] = "";
     }
     process.returnValue = "";
     process.queueNo = 0;
@@ -1290,7 +1302,7 @@ processDescriptor NullProcess ()
     process.priority = NOT_A_PRIORITY_PROCESS;
     process.creationTime = 0;
     process.runningTime = 0;
-    process.fileTable.Clear ();
+    process.fileTable.Clear();
     process.systemCall = "";
     process.systemCallParameter1 = "";
     process.systemCallParameter2 = "";
@@ -1301,44 +1313,44 @@ processDescriptor NullProcess ()
     return process;
 }
 
-unsigned int TimeSeed ()
+unsigned int TimeSeed()
 {
     time_t now;
     unsigned char *p;
     unsigned seed;
     size_t i;
 
-    now = time (0);
-    p = (unsigned char *) &now;
+    now = time(0);
+    p = (unsigned char *)&now;
     seed = 0;
 
-    for (i = 0; i < sizeof (now); i ++)
+    for (i = 0; i < sizeof(now); i++)
     {
-        seed = seed * (UCHAR_MAX + 2U) + p [i];
+        seed = seed * (UCHAR_MAX + 2U) + p[i];
     }
 
     return seed;
 }
 
-int GetRandomNoFromZeroTo (int maxNo)
+int GetRandomNoFromZeroTo(int maxNo)
 {
     double randomNumber;
     int randomNumberScaled;
 
-    randomNumber = rand () / (1.0 + (double) RAND_MAX);
-    randomNumberScaled = (int) (randomNumber * (double) maxNo);
+    randomNumber = rand() / (1.0 + (double)RAND_MAX);
+    randomNumberScaled = (int)(randomNumber * (double)maxNo);
 
     return randomNumberScaled;
 }
 
-int RandomQuantumLengthAdjustment (int baseQuantumLength)
+int RandomQuantumLengthAdjustment(int baseQuantumLength)
 {
     int quantumLengthAdjustment;
     int quantumLengthAdjustmentSign;
 
-    quantumLengthAdjustment = (int) (baseQuantumLength / 20) + 1;
-    quantumLengthAdjustment = GetRandomNoFromZeroTo (quantumLengthAdjustment);
-    quantumLengthAdjustmentSign = GetRandomNoFromZeroTo (2);
+    quantumLengthAdjustment = (int)(baseQuantumLength / 20) + 1;
+    quantumLengthAdjustment = GetRandomNoFromZeroTo(quantumLengthAdjustment);
+    quantumLengthAdjustmentSign = GetRandomNoFromZeroTo(2);
     if (quantumLengthAdjustmentSign == 0)
     {
         quantumLengthAdjustment = quantumLengthAdjustment * -1;
@@ -1349,11 +1361,11 @@ int RandomQuantumLengthAdjustment (int baseQuantumLength)
 
 // Numeric to String Function
 
-string itos (int i)
+string itos(int i)
 {
     stringstream s;
 
     s << i;
 
-    return s.str ();
+    return s.str();
 }
