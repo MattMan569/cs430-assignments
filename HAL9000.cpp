@@ -431,6 +431,26 @@ bool ExecuteInstruction(int currentProgramTextAddress, memoryCell contents1, str
         AllocateLocalSymbol(contents1);
         return false;
     }
+    else if (contents1.symbol == "clone")
+    {
+        Clone(restartInstructionStatusFlag, buffer, result);
+        return true;
+    }
+    else if (contents1.symbol == "run")
+    {
+        Run(contents1.value, restartInstructionStatusFlag);
+        return true;
+    }
+    else if (contents1.symbol == "pid")
+    {
+        GetPid("PID");
+        return false;
+    }
+    else if (contents1.symbol == "parentpid")
+    {
+        GetPid("PARENT_PID");
+        return false;
+    }
     else if (contents1.symbol == "coresnapshot")
     {
         CoreSnapShot();
@@ -1813,6 +1833,19 @@ void Join()
     return;
 }
 
+void GetPid(string pidType)
+{
+    int pid;
+
+    pid = GetKernelVariableIntegerValue(pidType);
+
+    ram.SetP(GetKernelVariableIntegerValue("TOP_FUNCTION_CALL_VALUES_STACK_ADDRESS"));
+    ram.Push("integer", itos(pid), partitionNo);
+    SetKernelVariableValue("TOP_FUNCTION_CALL_VALUES_STACK_ADDRESS", itos(ram.GetP()));
+
+    return;
+}
+
 void CoreSnapShot()
 {
     int pid;
@@ -2277,6 +2310,87 @@ void Close(string symbol, string restartInstructionStatusFlag, string result)
             CoreDump();
             exit(1);
         }
+    }
+
+    return;
+}
+
+void Clone(string restartInstructionStatusFlag, string buffer, string result)
+{
+    if (restartInstructionStatusFlag == "false")
+    {
+        SetKernelVariableValue("RESTART_INSTRUCTION_STATUS_FLAG", "true");
+        ProcessImageToFile(GetKernelVariableIntegerValue("PID"), "backingstore");
+        SetKernelVariableValue("RESTART_INSTRUCTION_STATUS_FLAG", "false");
+        HALosMessage.parameter1 = "CLONE";
+        HALosMessage.parameter3 = "";
+        HALosMessage.parameter4 = "";
+        HALosMessage.parameter5 = "";
+        HALosMessage.parameter6 = "";
+    }
+    else
+    {
+        if (result == "CLONE_OK")
+        {
+            ram.SetP(GetKernelVariableIntegerValue("TOP_FUNCTION_CALL_VALUES_STACK_ADDRESS"));
+            ram.Push("integer", buffer, partitionNo);
+            SetKernelVariableValue("TOP_FUNCTION_CALL_VALUES_STACK_ADDRESS", itos(ram.GetP()));
+        }
+        else // (result == "CLONE_FAILED")
+        {
+            cout << "HAL9000: unable to clone child process" << endl;
+            CoreDump();
+            exit(1);
+        }
+    }
+
+    return;
+}
+
+void Run(string symbol, string restartInstructionStatusFlag)
+{
+    int address1;
+    int address2;
+    memoryCell contents;
+    string commandLine;
+
+    if (restartInstructionStatusFlag == "false")
+    {
+        if (symbol[0] == '\'')
+        {
+            commandLine = symbol.substr(1, symbol.length() - 1);
+        }
+        else
+        {
+            address1 = GetLocalSymbolAddress(symbol);
+            if (address1 == -1)
+            {
+                address1 = GetGlobalSymbolAddress(symbol);
+                if (address1 == -1)
+                {
+                    cout << "HAL9000: " << symbol << " not defined" << endl;
+                    CoreDump();
+                    exit(1);
+                }
+            }
+            ram.SetP(address1);
+            contents = ram.Read(partitionNo);
+            address2 = atoi(contents.value.c_str());
+            ram.SetP(address2);
+            contents = ram.Read(partitionNo);
+            commandLine = contents.value;
+        }
+        HALosMessage.parameter1 = "RUN";
+        HALosMessage.parameter3 = commandLine;
+        HALosMessage.parameter4 = itos(GetKernelVariableIntegerValue("PARENT_PID"));
+        HALosMessage.parameter5 = "";
+        HALosMessage.parameter6 = "";
+    }
+    else // (result == "RUN_FAILED")
+    {
+        cout << "HAL9000: unable to replace process image" << endl;
+        CoreDump();
+        exit(1);
     }
 
     return;
