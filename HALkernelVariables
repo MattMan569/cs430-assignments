@@ -1,4 +1,5 @@
 INSTRUCTION_POINTER                    :0d_null
+PARENT_PID:                            :0
 PID                                    :-1
 PROGRAM_NAME                           :
 START_ADDRESS                          :0d_null
