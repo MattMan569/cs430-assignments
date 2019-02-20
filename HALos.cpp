@@ -190,7 +190,8 @@ void HandleNewProcess(string command, string arguments[], string type)
         process.creationTime = GetClockTicks();
         process.direction = "DOWN";
         process.interruptCounter = cpuSchedulingPolicies[process.queueNo].interruptsUntilMoveDown + 1;
-        if (ProcessImageToFile(process.pid, process.command))
+        // Assume parent process is the shell (PID == 0)
+        if (ProcessImageToFile(process.pid, "0", process.command))
         {
             readyQueue.Enqueue(process);
             if (type == "BACKGROUND_PROCESS")
@@ -221,9 +222,11 @@ bool ProcessImageToFile(string pid, string parentPid, string command)
     string programLine;
     size_t foundRunningTime;
     size_t foundPid;
+    size_t foundParentPid;
 
     foundRunningTime = string::npos;
     foundPid = string::npos;
+    foundParentPid = string::npos;
 
     programFile.open(command.c_str());
     if (!programFile)
@@ -242,7 +245,7 @@ bool ProcessImageToFile(string pid, string parentPid, string command)
     getline(programFile, programLine);
     while (programFile)
     {
-        programLine = InitializePidInProcessImage(pid, programLine, foundPid, foundRunningTime);
+        programLine = InitializePidInProcessImage(pid, parentPid, programLine, foundPid, foundParentPid, foundRunningTime);
         processImageFile << programLine << endl;
         getline(programFile, programLine);
     }
@@ -273,6 +276,15 @@ string InitializePidInProcessImage(string pid, string parentPid, string programL
         {
             programLine = programLine.substr(0, foundPid);
             programLine = programLine + "PID :" + pid;
+        }
+    }
+    else if (foundParentPid == string::npos)
+    {
+        foundParentPid = programLine.find("PARENT_PID :");
+        if (foundParentPid != string::npos)
+        {
+            programLine = programLine.substr(0, foundParentPid);
+            programLine = programLine + "PARENT_PID :" + parentPid;
         }
     }
 
