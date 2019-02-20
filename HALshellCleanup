@@ -1,0 +1,12 @@
+#! /usr/bin/tcsh -f
+
+#
+# HALshellCleanup
+#
+# Copyright (c) 2019 Robert J. Hilderman.
+# All Rights Reserved.
+#
+
+rm *ToHALshell* >& /dev/null
+rm *ForHALshell* >& /dev/null
+exit 0

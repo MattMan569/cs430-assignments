@@ -1,0 +1,30 @@
+#! /usr/bin/tcsh -f
+
+#
+# HALstart
+#
+# Copyright (c) 2019 Robert J. Hilderman.
+# All Rights Reserved.
+#
+
+clear
+echo
+echo "*********************************************"
+echo "*               HALos v5.4.6                *"
+echo "*                                           *"
+echo "*  Copyright (c) 2019 Robert J. Hilderman.  *"
+echo "*           All Rights Reserved.            *"
+echo "*********************************************"
+echo
+echo "HALstart: powering up HAL9000 ..."
+rm *template >& /dev/null
+rm *backingstore >& /dev/null
+rm ./*backingstore >& /dev/null
+rm *coresnapshot* >& /dev/null
+rm *To* >& /dev/null
+rm *For* >& /dev/null
+rm *coredump >& /dev/null
+rm ./*coredump >& /dev/null
+rm core.* >& /dev/null
+HAL9000
+exit 0

@@ -1,0 +1,11 @@
+#! /usr/bin/tcsh -f
+
+#
+# HAL9000Cleanup
+#
+# Copyright (c) 2019 Robert J. Hilderman.
+# All Rights Reserved.
+#
+
+rm *ToHAL9000* >& /dev/null
+exit 0

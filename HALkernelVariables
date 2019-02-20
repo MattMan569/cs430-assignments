@@ -1,0 +1,16 @@
+INSTRUCTION_POINTER                    :0d_null
+PID                                    :-1
+PROGRAM_NAME                           :
+START_ADDRESS                          :0d_null
+END_ADDRESS                            :0d_null
+RETURN_VALUE                           :
+COMPARISON_STATUS_FLAG                 :-2
+NEXT_ARGUMENT_ADDRESS                  :0d_null
+QUANTUM_TIME_REMAINING                 :-1
+QUANTUM_LENGTH                         :-1
+RUNNING_TIME                           :-1
+RESTART_INSTRUCTION_STATUS_FLAG        :false
+LAST_GLOBAL_SYMBOLS_TABLE_ADDRESS      :0d_null
+LAST_GLOBAL_VALUES_TABLE_ADDRESS       :0d_null
+TOP_FUNCTION_CALL_STACK_ADDRESS        :0d_null
+TOP_FUNCTION_CALL_VALUES_STACK_ADDRESS :0d_null

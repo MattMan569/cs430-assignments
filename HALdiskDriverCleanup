@@ -1,0 +1,11 @@
+#! /usr/bin/tcsh -f
+
+#
+# HALdiskDriverCleanup
+#
+# Copyright (c) 2019 Robert J. Hilderman.
+# All Rights Reserved.
+#
+
+rm *ToHALdiskDriver* >& /dev/null
+exit 0

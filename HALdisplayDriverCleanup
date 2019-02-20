@@ -1,0 +1,11 @@
+#! /usr/bin/tcsh -f
+
+#
+# HALdisplayDriverCleanup
+#
+# Copyright (c) 2019 Robert J. Hilderman.
+# All Rights Reserved.
+#
+
+rm *ToHALdisplayDriver* >& /dev/null
+exit 0

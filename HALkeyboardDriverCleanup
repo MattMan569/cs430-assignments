@@ -1,0 +1,11 @@
+#! /usr/bin/tcsh -f
+
+#
+# HALkeyboardDriverCleanup
+#
+# Copyright (c) 2019 Robert J. Hilderman.
+# All Rights Reserved.
+#
+
+rm *ToHALkeyboardDriver* >& /dev/null
+exit 0

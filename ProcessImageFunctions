@@ -1,0 +1,63 @@
+bool ProcessImageToFile (string pid, string command)
+{
+    ifstream programFile;
+    ofstream processImageFile;
+    string processImageFileName;
+    string programLine;
+    size_t foundRunningTime;
+    size_t foundPid;
+
+    foundRunningTime = string::npos;
+    foundPid = string::npos;
+
+    programFile.open (command.c_str ());
+    if (!programFile)
+    {
+        return false;
+    }
+
+    processImageFileName = pid + "_backingstore";
+    processImageFile.open (processImageFileName.c_str ());
+    if (!processImageFile)
+    {
+        programFile.close ();
+        return false;
+    }
+
+    getline (programFile, programLine);
+    while (programFile)
+    {
+        programLine = InitializePidInProcessImage (pid, programLine, foundPid, foundRunningTime);
+        processImageFile << programLine << endl;
+        getline (programFile, programLine);
+    }
+
+    programFile.close ();
+    processImageFile.close ();
+
+    return true;
+}
+
+string InitializePidInProcessImage (string pid, string programLine, size_t &foundPid, size_t &foundRunningTime)
+{
+    if (foundRunningTime == string::npos)
+    {
+        foundRunningTime = programLine.find ("RUNNING_TIME :");
+        if (foundRunningTime != string::npos)
+        {
+            programLine = programLine.substr (0, foundRunningTime);
+            programLine = programLine + "RUNNING_TIME :0";
+        }
+    }
+    else if (foundPid == string::npos)
+    {
+        foundPid = programLine.find ("PID :");
+        if (foundPid != string::npos)
+        {
+            programLine = programLine.substr (0, foundPid);
+            programLine = programLine + "PID :" + pid;
+        }
+    }
+
+    return programLine;
+}
