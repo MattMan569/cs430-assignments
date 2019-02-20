@@ -213,7 +213,7 @@ void HandleNewProcess(string command, string arguments[], string type)
 }
 
 // New version
-bool ProcessImageToFile(string pid, string command)
+bool ProcessImageToFile(string pid, string parentPid, string command)
 {
     ifstream programFile;
     ofstream processImageFile;
@@ -254,8 +254,8 @@ bool ProcessImageToFile(string pid, string command)
 }
 
 // New version
-string InitializePidInProcessImage(string pid, string programLine,
-                                   size_t &foundPid, size_t &foundRunningTime)
+string InitializePidInProcessImage(string pid, string parentPid, string programLine,
+                                   size_t &foundPid, size_t &foundParentPid, size_t &foundRunningTime)
 {
     if (foundRunningTime == string::npos)
     {

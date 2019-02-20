@@ -21,31 +21,31 @@
 using namespace std;
 
 #ifndef HAL_OS_INIT_H
-    #include "HALosInit.h"
+#include "HALosInit.h"
 #endif
 
 #ifndef HAL_QUEUE_H
-    #include "HALreadyQueue.h"
+#include "HALreadyQueue.h"
 #endif
 
 #ifndef HAL_QUEUE_H
-    #include "HALqueue.h"
+#include "HALqueue.h"
 #endif
 
 #ifndef HAL_MEMORY_H
-    #include "HALmemory.h"
+#include "HALmemory.h"
 #endif
 
 #ifndef HAL_PARTITION_TABLE_H
-    #include "HALpartitionTable.h"
+#include "HALpartitionTable.h"
 #endif
 
 #ifndef HAL_GLOBALS_H
-    #include "HALglobals.h"
+#include "HALglobals.h"
 #endif
 
 #ifndef HAL_SIGNALS_H
-    #include "HALsignals.h"
+#include "HALsignals.h"
 #endif
 
 // Global Variables
@@ -53,12 +53,12 @@ using namespace std;
 time_t startTime;
 time_t endTime;
 
-ReadyQueueType readyQueue (READY_QUEUE_SIZE, NO_OF_READY_QUEUES, cpuSchedulingPolicies);
-QueueType displayQueue (IO_QUEUE_SIZE);
-QueueType keyboardQueue (IO_QUEUE_SIZE);
-QueueType diskQueue (IO_QUEUE_SIZE);
-MemoryType ram (PARTITION_SIZE, 1);
-PartitionTableType partitionTable (NO_OF_PARTITIONS);
+ReadyQueueType readyQueue(READY_QUEUE_SIZE, NO_OF_READY_QUEUES, cpuSchedulingPolicies);
+QueueType displayQueue(IO_QUEUE_SIZE);
+QueueType keyboardQueue(IO_QUEUE_SIZE);
+QueueType diskQueue(IO_QUEUE_SIZE);
+MemoryType ram(PARTITION_SIZE, 1);
+PartitionTableType partitionTable(NO_OF_PARTITIONS);
 
 extern char **environ;
 
@@ -101,48 +101,48 @@ char *theClockBase;
 
 // The "Operating System"
 
-void HALos ();
-void HandleCommand (string command, string arguments [], string type);
-void HandleNewProcess (string command, string arguments [], string type);
-bool ProcessImageToFile (string pid, string command);
-string InitializePidInProcessImage (string pid, string programLine,
-                                    size_t &foundPid, size_t &foundRunningTime);
-void HandleHAL9000Interrupt ();
-void HandleSystemCall ();
-void HandleHALkeyboardDriverInterrupt ();
-void HandleHALdisplayDriverInterrupt ();
-void HandleHALdiskDriverInterrupt ();
-void SetSystemCallParameters (processDescriptor &process, string systemCall, string systemCallParameter1, string systemCallParameter2, string sytemcallParameter3, string systemCallBuffer, string systemCallResult);
-void RunCpuScheduler ();
-void StartCpuScheduler ();
-void StopCpuScheduler ();
+void HALos();
+void HandleCommand(string command, string arguments[], string type);
+void HandleNewProcess(string command, string arguments[], string type);
+bool ProcessImageToFile(string pid, string parentPid, string command);
+string InitializePidInProcessImage(string pid, string parentPid, string programLine,
+                                   size_t &foundPid, size_t &foundParentPid, size_t &foundRunningTime);
+void HandleHAL9000Interrupt();
+void HandleSystemCall();
+void HandleHALkeyboardDriverInterrupt();
+void HandleHALdisplayDriverInterrupt();
+void HandleHALdiskDriverInterrupt();
+void SetSystemCallParameters(processDescriptor &process, string systemCall, string systemCallParameter1, string systemCallParameter2, string sytemcallParameter3, string systemCallBuffer, string systemCallResult);
+void RunCpuScheduler();
+void StartCpuScheduler();
+void StopCpuScheduler();
 
 // The "Communication Media"
 
-string GetMessageFromHALshell (string arguments [], string &type);
-void SendReturnStatusToHALshell (string pid, string returnValue, string message);
-void SaveReturnStatusForHALshell (string pid, string returnValue, string message);
-void GetMessageFromHAL9000 ();
-void SendMessageToHAL9000 (processDescriptor process);
-void GetMessageFromHALkeyboardDriver ();
-void SendMessageToHALkeyboardDriver (string pid, string systemCall);
-void GetMessageFromHALdisplayDriver ();
-void SendMessageToHALdisplayDriver (string pid, string systemCall, string buffer);
-void GetMessageFromHALdiskDriver ();
-void SendMessageToHALdiskDriver (string pid, string systemCall, string fileName, string mode, string markerPosition, string buffer);
+string GetMessageFromHALshell(string arguments[], string &type);
+void SendReturnStatusToHALshell(string pid, string returnValue, string message);
+void SaveReturnStatusForHALshell(string pid, string returnValue, string message);
+void GetMessageFromHAL9000();
+void SendMessageToHAL9000(processDescriptor process);
+void GetMessageFromHALkeyboardDriver();
+void SendMessageToHALkeyboardDriver(string pid, string systemCall);
+void GetMessageFromHALdisplayDriver();
+void SendMessageToHALdisplayDriver(string pid, string systemCall, string buffer);
+void GetMessageFromHALdiskDriver();
+void SendMessageToHALdiskDriver(string pid, string systemCall, string fileName, string mode, string markerPosition, string buffer);
 
 // Miscellaneous Functions and Procedures
 
-void ClearMessageParameters (message &HALMessage);
-int UpdatePartitionTable (string runningPid, string &action);
-processDescriptor NullProcess ();
-unsigned int TimeSeed ();
-int GetRandomNoFromZeroTo (int maxNo);
-int RandomQuantumLengthAdjustment (int baseQuantumLength);
+void ClearMessageParameters(message &HALMessage);
+int UpdatePartitionTable(string runningPid, string &action);
+processDescriptor NullProcess();
+unsigned int TimeSeed();
+int GetRandomNoFromZeroTo(int maxNo);
+int RandomQuantumLengthAdjustment(int baseQuantumLength);
 
 // Numeric to String Function
 
-string itos (int i);
+string itos(int i);
 
 /*
 
@@ -156,12 +156,12 @@ string itos (int i);
 
 */
 
-void Initialize ();
-int GetClockTicks ();
+void Initialize();
+int GetClockTicks();
 
-extern void Compile (string arguments []);
-extern void Cull (string command, string arguments []);
-extern void ShutdownAndRestart (string command, string arguments []);
+extern void Compile(string arguments[]);
+extern void Cull(string command, string arguments[]);
+extern void ShutdownAndRestart(string command, string arguments[]);
 
 volatile sig_atomic_t messageFromHALshell = 0;
 volatile sig_atomic_t messageFromHAL9000 = 0;
@@ -169,127 +169,127 @@ volatile sig_atomic_t messageFromHALkeyboardDriver = 0;
 volatile sig_atomic_t messageFromHALdisplayDriver = 0;
 volatile sig_atomic_t messageFromHALdiskDriver = 0;
 
-int main (int argc, char *argv [])
+int main(int argc, char *argv[])
 {
-    segmentID = atoi (argv [1]);
-    segmentSize = (size_t) atoi (argv [2]);
+    segmentID = atoi(argv[1]);
+    segmentSize = (size_t)atoi(argv[2]);
 
-    Initialize ();
-    HALos ();
+    Initialize();
+    HALos();
 
     return 0;
 }
 
-void Initialize ()
+void Initialize()
 {
     cout << "HALbios: HALos OK" << endl;
-    usleep (SLEEP_DELAY);
+    usleep(SLEEP_DELAY);
 
     cout << "HALos: initializing ..." << endl;
-    usleep (SLEEP_DELAY);
+    usleep(SLEEP_DELAY);
 
-    if ((theClockBase = (char *) shmat (segmentID, NULL, 0)) == (char *) -1)
+    if ((theClockBase = (char *)shmat(segmentID, NULL, 0)) == (char *)-1)
     {
         cout << "HALos: unable to read clock" << endl;
-        exit (1);
+        exit(1);
     }
 
-    if ((sigemptyset (&interruptMask) == -1) ||
-        (sigaddset (&interruptMask, SIGRTMIN) == -1))
+    if ((sigemptyset(&interruptMask) == -1) ||
+        (sigaddset(&interruptMask, SIGRTMIN) == -1))
     {
         cout << "HALos: unable to initialize signal mask" << endl;
-        exit (1);
+        exit(1);
     }
     act.sa_sigaction = &SignalHandler;
     act.sa_mask = interruptMask;
     act.sa_flags = SA_SIGINFO;
-    if ((sigaction (SIGRTMIN, &act, NULL) == -1))
+    if ((sigaction(SIGRTMIN, &act, NULL) == -1))
     {
         cout << "HALos: unable to connect to HALshell" << endl;
-        exit (1);
+        exit(1);
     }
-    signal (SIGINT, SIG_IGN);
-    usleep (SLEEP_DELAY);
+    signal(SIGINT, SIG_IGN);
+    usleep(SLEEP_DELAY);
 
-    HAL9000Pid = getppid ();
+    HAL9000Pid = getppid();
 
     cout << "HALos: loading HALkeyboardDriver ..." << endl;
-    usleep (SLEEP_DELAY);
-    HALkeyboardDriverPid = fork ();
+    usleep(SLEEP_DELAY);
+    HALkeyboardDriverPid = fork();
     if (HALkeyboardDriverPid < 0)
     {
         cout << "HALos: HALkeyboardDriver process creation failed" << endl;
-        exit (1);
+        exit(1);
     }
     else if (HALkeyboardDriverPid == 0)
     {
-        execle ("HALkeyboardDriver", "HALkeyboardDriver", (char *) NULL, environ);
+        execle("HALkeyboardDriver", "HALkeyboardDriver", (char *)NULL, environ);
         cout << "HALos: HALkeyboardDriver failed to load" << endl;
-        exit (1);
+        exit(1);
     }
     cout << "HALos: HALkeyboardDriver OK" << endl;
-    usleep (SLEEP_DELAY);
+    usleep(SLEEP_DELAY);
 
     cout << "HALos: loading HALdisplayDriver ..." << endl;
-    usleep (SLEEP_DELAY);
-    HALdisplayDriverPid = fork ();
+    usleep(SLEEP_DELAY);
+    HALdisplayDriverPid = fork();
     if (HALdisplayDriverPid < 0)
     {
         cout << "HALos: HALdisplayDriver process creation failed" << endl;
-        exit (1);
+        exit(1);
     }
     else if (HALdisplayDriverPid == 0)
     {
-        execle ("HALdisplayDriver", "HALdisplayDriver", (char *) NULL, environ);
+        execle("HALdisplayDriver", "HALdisplayDriver", (char *)NULL, environ);
         cout << "HALos: HALdisplayDriver failed to load" << endl;
-        exit (1);
+        exit(1);
     }
     cout << "HALos: HALdisplayDriver OK" << endl;
-    usleep (SLEEP_DELAY);
+    usleep(SLEEP_DELAY);
 
     cout << "HALos: loading HALdiskDriver ..." << endl;
-    usleep (SLEEP_DELAY);
-    HALdiskDriverPid = fork ();
+    usleep(SLEEP_DELAY);
+    HALdiskDriverPid = fork();
     if (HALdiskDriverPid < 0)
     {
         cout << "HALos: HALdiskDriver process creation failed" << endl;
-        exit (1);
+        exit(1);
     }
     else if (HALdiskDriverPid == 0)
     {
-        execle ("HALdiskDriver", "HALdiskDriver", (char *) NULL, environ);
+        execle("HALdiskDriver", "HALdiskDriver", (char *)NULL, environ);
         cout << "HALos: HALdiskDriver failed to load" << endl;
-        exit (1);
+        exit(1);
     }
     cout << "HALos: HALdiskDriver OK" << endl;
-    usleep (SLEEP_DELAY);
+    usleep(SLEEP_DELAY);
 
     cout << "HALos: loading HALshell ..." << endl;
-    usleep (SLEEP_DELAY);
-    HALshellPid = fork ();
+    usleep(SLEEP_DELAY);
+    HALshellPid = fork();
     if (HALshellPid < 0)
     {
         cout << "HALos: HALshell process creation failed" << endl;
-        exit (1);
+        exit(1);
     }
     else if (HALshellPid == 0)
     {
-        execle ("HALshell", "HALshell", (char *) NULL, environ);
+        execle("HALshell", "HALshell", (char *)NULL, environ);
         cout << "HALos: HALshell failed to load" << endl;
-        exit (1);
+        exit(1);
     }
 
-    cpuProcess = NullProcess ();
-    keyboardProcess = NullProcess ();
-    displayProcess = NullProcess ();
-    diskProcess = NullProcess ();
+    cpuProcess = NullProcess();
+    keyboardProcess = NullProcess();
+    displayProcess = NullProcess();
+    diskProcess = NullProcess();
 
-    srand (TimeSeed ());
+    srand(TimeSeed());
 
     return;
 }
 
-int GetClockTicks ()
+int GetClockTicks()
 {
     int clockTicks;
     string clockTicksBuffer;
@@ -299,36 +299,36 @@ int GetClockTicks ()
     i = 0;
     while (*theClock != '\0')
     {
-        clockTicksBuffer [i] = *theClock ++;
-        i ++;
+        clockTicksBuffer[i] = *theClock++;
+        i++;
     }
-    clockTicksBuffer [i] = '\0';
-    clockTicks = atoi (clockTicksBuffer.c_str ());
+    clockTicksBuffer[i] = '\0';
+    clockTicks = atoi(clockTicksBuffer.c_str());
 
     return clockTicks;
 }
 
-static void SignalHandler (int signalNo, siginfo_t *info, void *context)
+static void SignalHandler(int signalNo, siginfo_t *info, void *context)
 {
     if (signalNo == SIGRTMIN)
     {
-        if (info -> si_pid == HALshellPid)
+        if (info->si_pid == HALshellPid)
         {
             messageFromHALshell = 1;
         }
-        else if (info -> si_pid == HAL9000Pid)
+        else if (info->si_pid == HAL9000Pid)
         {
             messageFromHAL9000 = 1;
         }
-        else if (info -> si_pid == HALkeyboardDriverPid)
+        else if (info->si_pid == HALkeyboardDriverPid)
         {
             messageFromHALkeyboardDriver = 1;
         }
-        else if (info -> si_pid == HALdisplayDriverPid)
+        else if (info->si_pid == HALdisplayDriverPid)
         {
             messageFromHALdisplayDriver = 1;
         }
-        else if (info -> si_pid == HALdiskDriverPid)
+        else if (info->si_pid == HALdiskDriverPid)
         {
             messageFromHALdiskDriver = 1;
         }
